@@ -220,9 +220,3 @@ app.post('/vendor/generate', async (req, res) => {
 
   res.json({ code, remainingBalance: vendor.balance });
 });
-
-await Vendor.insertMany([
-  { vendorId: 'vendor1', password: 'vendr@123', balance: 0 },
-  { vendorId: 'vendor2', password: 'vendr@234', balance: 0 },
-  { vendorId: 'vendor3', password: 'vendr@345', balance: 0 }
-]);
