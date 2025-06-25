@@ -90,32 +90,16 @@ app.get('/admin/codes', checkAuth, async (req, res) => {
   res.json(codes);
 });
 
-// 🔁 Telegram & Email Alert on Redeem
+// 🔁 Telegram Alert on Redeem (No email)
 async function sendAlerts(code, upi, amount) {
-  // Telegram
   const telegramToken = '7595288502:AAG2LN5dsdtqGhQbGRq3JAyJv5Ydfqp5rVs';
   const chatId = '6772999071';
   const telegramMsg = `✅ ₹${amount} redeemed by ${upi} using code ${code}`;
+  
   await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text: telegramMsg })
-  });
-
-  // Email via Nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: 'madmaxhero31@gmail.com',
-      pass: 'your-app-password' // 🔐 Use Gmail App Password here
-    }
-  });
-
-  await transporter.sendMail({
-    from: 'Cash2UPI <madmaxhero31@gmail.com>',
-    to: 'madmaxhero31@gmail.com',
-    subject: `Code Redeemed: ₹${amount}`,
-    text: `Code ${code} redeemed by ${upi} for ₹${amount}`
   });
 }
 
