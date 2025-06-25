@@ -68,8 +68,20 @@ app.post('/login', async (req, res) => {
   return res.send('❌ Invalid credentials');
 });
 
-app.get('/admin', checkAuth, (req, res) => {
+// ✅ Protect Admin Page
+app.get('/admin', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.redirect('/login');
+  }
   res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// ✅ Protect Vendor Page
+app.get('/vendor', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'vendor') {
+    return res.redirect('/login');
+  }
+  res.sendFile(path.join(__dirname, 'vendor.html'));
 });
 
 app.get('/user', (req, res) => {
