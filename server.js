@@ -1,16 +1,36 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Serve static files (like HTML, CSS, JS) from the current folder
 app.use(express.static(__dirname));
 
-// Serve admin and user HTML pages
+// MongoDB connection
+mongoose.connect(
+  'mongodb+srv://Varuntejjj:%40Akshu311@cash2upi.voiljlo.mongodb.net/cash2upi?retryWrites=true&w=majority&appName=cash2upi',
+  { useNewUrlParser: true, useUnifiedTopology: true }
+).then(() => {
+  console.log('✅ Connected to MongoDB');
+}).catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
+// Code schema
+const codeSchema = new mongoose.Schema({
+  code: String,
+  amount: Number,
+  used: Boolean,
+  upi: String,
+  redeemedAt: Date
+});
+
+const Code = mongoose.model('Code', codeSchema);
+
+// Serve frontend pages
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -19,35 +39,35 @@ app.get('/user', (req, res) => {
   res.sendFile(path.join(__dirname, 'user.html'));
 });
 
-// Optional homepage
+// Home
 app.get('/', (req, res) => {
   res.send('Welcome to the Cash2UPI backend!');
 });
 
-// In-memory code storage
-let codes = [];
-
-// ✅ Admin: Generate a code
-app.post('/admin/generate', (req, res) => {
+// Generate code
+app.post('/admin/generate', async (req, res) => {
   const { amount } = req.body;
   if (!amount || isNaN(amount)) {
     return res.status(400).json({ error: 'Invalid amount' });
   }
 
   const code = uuidv4().split('-')[0];
-  codes.push({ code, amount: parseInt(amount), used: false });
-  res.json({ code, amount });
+  const newCode = new Code({ code, amount: parseInt(amount), used: false });
+  await newCode.save();
+
+  res.json({ code: newCode.code, amount: newCode.amount });
 });
 
-// ✅ Admin: View all codes
-app.get('/admin/codes', (req, res) => {
+// List all codes
+app.get('/admin/codes', async (req, res) => {
+  const codes = await Code.find().sort({ _id: -1 });
   res.json(codes);
 });
 
-// ✅ User: Redeem a code
-app.post('/redeem', (req, res) => {
+// Redeem code
+app.post('/redeem', async (req, res) => {
   const { code, upi } = req.body;
-  const found = codes.find(c => c.code === code);
+  const found = await Code.findOne({ code });
 
   if (!found) return res.status(404).json({ error: 'Code not found' });
   if (found.used) return res.status(400).json({ error: 'Code already used' });
@@ -55,6 +75,7 @@ app.post('/redeem', (req, res) => {
   found.used = true;
   found.upi = upi;
   found.redeemedAt = new Date();
+  await found.save();
 
   setTimeout(() => {
     console.log(`✅ ₹${found.amount} sent to ${upi} for code ${code}`);
@@ -63,8 +84,8 @@ app.post('/redeem', (req, res) => {
   res.json({ message: `₹${found.amount} will be sent to ${upi} shortly.` });
 });
 
-// ✅ Start the server
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Backend running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
