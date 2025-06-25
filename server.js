@@ -127,3 +127,40 @@ app.post('/redeem', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+
+app.post('/cashbot', async (req, res) => {
+  const prompt = req.body.prompt;
+  const systemPrompt = `
+You are CashBot, a helpful assistant for a UPI redeem service called Cash2UPI.
+Answer questions like:
+- How to redeem a code?
+- What happens if a user enters wrong UPI?
+- How long does it take to get the money?
+- Is Cash2UPI safe?
+Be helpful and polite.
+`;
+
+  try {
+    const result = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer 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',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
+
+    const json = await result.json();
+    const reply = json.choices[0].message.content;
+    res.json({ reply });
+  } catch (err) {
+    console.error(err);
+    res.json({ reply: '❌ CashBot failed to respond. Please try again later.' });
+  }
+});
