@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cash2UPI Admin Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen px-6 py-10">
+  <div class="max-w-xl mx-auto">
+    <h1 class="text-3xl font-bold text-green-400 mb-6 text-center">Admin Code Generator</h1>
+
+    <form id="generateForm" class="space-y-4 bg-gray-800 p-6 rounded-xl shadow-xl">
+      <div>
+        <label for="amount" class="block mb-1">Enter Amount (INR)</label>
+        <input type="number" id="amount" required class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600" />
+      </div>
+      <button type="submit" class="bg-green-500 hover:bg-green-600 text-black font-semibold px-4 py-2 rounded w-full">Generate Code</button>
+    </form>
+
+    <div id="result" class="mt-6 hidden bg-gray-800 p-4 rounded-xl border border-green-500">
+      <h2 class="text-lg font-semibold text-green-300">Generated Code</h2>
+      <p id="codeText" class="text-white mt-2"></p>
+    </div>
+
+    <div id="codeList" class="mt-10">
+      <h2 class="text-xl font-bold mb-3">All Codes</h2>
+      <ul id="codes" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('generateForm');
+    const result = document.getElementById('result');
+    const codeText = document.getElementById('codeText');
+    const codesList = document.getElementById('codes');
+
+    async function fetchCodes() {
+      const res = await fetch('http://localhost:5000/admin/codes');
+      const data = await res.json();
+      codesList.innerHTML = '';
+      data.forEach(code => {
+        const li = document.createElement('li');
+        li.className = 'bg-gray-700 p-3 rounded';
+        li.innerHTML = `<strong>${code.code}</strong> - ₹${code.amount} <span class="${code.used ? 'text-red-400' : 'text-green-400'}">[${code.used ? 'Used' : 'Active'}]</span>`;
+        codesList.appendChild(li);
+      });
+    }
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const amount = document.getElementById('amount').value;
+      const res = await fetch('http://localhost:5000/admin/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+      const data = await res.json();
+      codeText.textContent = `Code: ${data.code}, Amount: ₹${data.amount}`;
+      result.classList.remove('hidden');
+      form.reset();
+      fetchCodes();
+    });
+
+    fetchCodes();
+  </script>
+</body>
+</html>
