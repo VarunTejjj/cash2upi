@@ -30,39 +30,40 @@
   </div>
 
   <script>
-    const form = document.getElementById('generateForm');
-    const result = document.getElementById('result');
-    const codeText = document.getElementById('codeText');
-    const codesList = document.getElementById('codes');
+  <script>
+  const form = document.getElementById('generateForm');
+  const result = document.getElementById('result');
+  const codeText = document.getElementById('codeText');
+  const codesList = document.getElementById('codes');
 
-    async function fetchCodes() {
-      const res = await fetch('http://localhost:5000/admin/codes');
-      const data = await res.json();
-      codesList.innerHTML = '';
-      data.forEach(code => {
-        const li = document.createElement('li');
-        li.className = 'bg-gray-700 p-3 rounded';
-        li.innerHTML = `<strong>${code.code}</strong> - ₹${code.amount} <span class="${code.used ? 'text-red-400' : 'text-green-400'}">[${code.used ? 'Used' : 'Active'}]</span>`;
-        codesList.appendChild(li);
-      });
-    }
-
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const amount = document.getElementById('amount').value;
-      const res = await fetch('http://localhost:5000/admin/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount })
-      });
-      const data = await res.json();
-      codeText.textContent = `Code: ${data.code}, Amount: ₹${data.amount}`;
-      result.classList.remove('hidden');
-      form.reset();
-      fetchCodes();
+  async function fetchCodes() {
+    const res = await fetch('/admin/codes');
+    const data = await res.json();
+    codesList.innerHTML = '';
+    data.forEach(code => {
+      const li = document.createElement('li');
+      li.className = 'bg-gray-700 p-3 rounded';
+      li.innerHTML = `<strong>${code.code}</strong> - ₹${code.amount} <span class="${code.used ? 'text-red-400' : 'text-green-400'}">[${code.used ? 'Used' : 'Active'}]</span>`;
+      codesList.appendChild(li);
     });
+  }
 
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const amount = document.getElementById('amount').value;
+    const res = await fetch('/admin/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount })
+    });
+    const data = await res.json();
+    codeText.textContent = `Code: ${data.code}, Amount: ₹${data.amount}`;
+    result.classList.remove('hidden');
+    form.reset();
     fetchCodes();
-  </script>
+  });
+
+  fetchCodes();
+</script>
 </body>
 </html>
