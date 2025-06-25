@@ -3,7 +3,6 @@ const cors = require('cors');
 const path = require('path');
 const session = require('express-session');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { v4: uuidv4 } = require('uuid');
 
