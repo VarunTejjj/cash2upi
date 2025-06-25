@@ -232,3 +232,4 @@ async function initVendors() {
     console.log("✅ Vendors inserted.");
   }
 }
+initVendors();
