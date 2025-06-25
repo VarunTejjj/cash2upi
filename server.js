@@ -52,20 +52,19 @@ app.get('/login', (req, res) => {
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // ✅ Admin login check
+  // ✅ Admin
   if (username === 'admin' && password === '@Akshu311') {
-    req.session.user = { role: 'admin' };
+    req.session.user = { role: 'admin' }; // ✅ this sets the session
     return res.redirect('/admin');
   }
 
-  // ✅ Vendor login check
+  // ✅ Vendor
   const vendor = await Vendor.findOne({ vendorId: username, password });
   if (vendor) {
     req.session.user = { role: 'vendor', id: vendor.vendorId };
     return res.redirect('/vendor');
   }
 
-  // ❌ Invalid login
   return res.send('❌ Invalid credentials');
 });
 
