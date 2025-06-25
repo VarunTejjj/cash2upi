@@ -49,14 +49,21 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.post('/login', (req, res) => {
-  const { password } = req.body;
-  if (password === '@Akshu311') {
-    req.session.loggedIn = true;
-    res.redirect('/admin');
-  } else {
-    res.send('❌ Incorrect password');
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (username === 'admin' && password === '@Akshu311') {
+    req.session.user = { role: 'admin' };
+    return res.redirect('/admin');
   }
+
+  const vendor = await Vendor.findOne({ vendorId: username, password });
+  if (vendor) {
+    req.session.user = { role: 'vendor', id: vendor.vendorId };
+    return res.redirect('/vendor');
+  }
+
+  return res.send('❌ Invalid credentials');
 });
 
 app.get('/admin', checkAuth, (req, res) => {
@@ -156,4 +163,60 @@ app.post('/cashbot', (req, res) => {
 
   // Fallback
   res.json({ reply: "🤖 Sorry, I can't help with that. Try asking something related to redeeming, UPI, or timing." });
+});
+
+const Vendor = mongoose.model('Vendor', new mongoose.Schema({
+  vendorId: String,
+  password: String,
+  balance: Number
+}));
+
+app.get('/vendor', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'vendor') {
+    return res.redirect('/login');
+  }
+  res.sendFile(path.join(__dirname, 'vendor.html'));
+});
+
+app.get('/admin', (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.redirect('/login');
+  }
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.post('/admin/add-balance', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const { vendorId, amount } = req.body;
+  const vendor = await Vendor.findOne({ vendorId });
+  if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+
+  vendor.balance += parseInt(amount);
+  await vendor.save();
+
+  res.json({ message: `₹${amount} added to ${vendorId}` });
+});
+
+app.post('/vendor/generate', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'vendor') {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  const { amount } = req.body;
+  const vendor = await Vendor.findOne({ vendorId: req.session.user.id });
+  if (!vendor || vendor.balance < amount) {
+    return res.status(400).json({ error: 'Insufficient balance' });
+  }
+
+  const code = uuidv4().split('-')[0];
+  const newCode = new Code({ code, amount, used: false });
+  await newCode.save();
+
+  vendor.balance -= amount;
+  await vendor.save();
+
+  res.json({ code, remainingBalance: vendor.balance });
 });
