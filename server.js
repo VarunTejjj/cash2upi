@@ -1,3 +1,11 @@
+const session = require('express-session');
+
+app.use(session({
+  secret: 'cash2upi_secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Only true for HTTPS
+}));
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
