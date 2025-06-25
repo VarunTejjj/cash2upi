@@ -30,7 +30,7 @@
       const code = document.getElementById('code').value;
       const upi = document.getElementById('upi').value;
 
-      const res = await fetch('http://localhost:5000/redeem', {
+      const res = await fetch('/redeem', {  // ✅ relative path
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, upi })
