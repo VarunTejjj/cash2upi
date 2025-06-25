@@ -65,5 +65,29 @@
     // Load all codes on page load
     fetchCodes();
   </script>
+  <h2>Admin Panel</h2>
+<form onsubmit="addBalance(event)">
+  <input id="vendorId" placeholder="Vendor ID" required />
+  <input id="amount" type="number" placeholder="Amount" required />
+  <button type="submit">Add Balance</button>
+</form>
+<div id="result"></div>
+
+<script>
+  async function addBalance(e) {
+    e.preventDefault();
+    const vendorId = document.getElementById('vendorId').value;
+    const amount = document.getElementById('amount').value;
+
+    const res = await fetch('/admin/add-balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendorId, amount })
+    });
+
+    const data = await res.json();
+    document.getElementById('result').innerText = data.message || data.error;
+  }
+</script>
 </body>
 </html>
