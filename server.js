@@ -222,12 +222,13 @@ app.post('/vendor/generate', async (req, res) => {
 });
 
 async function initVendors() {
-  await Vendor.insertMany([
-    { vendorId: 'vendor1', password: 'vendr@123', balance: 0 },
-    { vendorId: 'vendor2', password: 'vendr@234', balance: 0 },
-    { vendorId: 'vendor3', password: 'vendr@345', balance: 0 }
-  ]);
-  console.log("✅ Vendors inserted.");
+  const count = await Vendor.countDocuments();
+  if (count === 0) {
+    await Vendor.insertMany([
+      { vendorId: 'vendor1', password: 'vendr@123', balance: 0 },
+      { vendorId: 'vendor2', password: 'vendr@234', balance: 0 },
+      { vendorId: 'vendor3', password: 'vendr@345', balance: 0 }
+    ]);
+    console.log("✅ Vendors inserted.");
+  }
 }
-
-initVendors();
