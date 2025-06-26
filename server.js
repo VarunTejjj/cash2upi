@@ -114,18 +114,26 @@ app.post('/redeem', async (req, res) => {
   if (!found) return res.status(404).json({ error: 'Code not found' });
   if (found.used) return res.status(400).json({ error: 'Code already used' });
 
-  found.used = true;
-  found.upi = upi;
-  found.redeemedAt = new Date();
-  await found.save();
+  try {
+    const payout = await sendRazorpayPayout(upi, found.amount, code);
 
-  await sendAlerts(found.code, upi, found.amount);
+    if (payout && payout.status === 'processed') {
+      found.used = true;
+      found.upi = upi;
+      found.redeemedAt = new Date();
+      await found.save();
 
-  setTimeout(() => {
-    console.log(`✅ ₹${found.amount} sent to ${upi} for code ${code}`);
-  }, 5000);
+      // Telegram alert
+      await sendAlerts(code, upi, found.amount);
 
-  res.json({ message: `₹${found.amount} will be sent to ${upi} shortly.` });
+      return res.json({ message: `✅ ₹${found.amount} sent to ${upi} successfully.` });
+    } else {
+      return res.status(500).json({ error: 'Payout failed. Please try again later.' });
+    }
+  } catch (err) {
+    console.error('❌ Razorpay payout error:', err?.response?.data || err.message);
+    return res.status(500).json({ error: 'Payout request failed. Please check UPI ID or try again.' });
+  }
 });
 
 // CashBot route
