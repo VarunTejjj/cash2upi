@@ -114,26 +114,18 @@ app.post('/redeem', async (req, res) => {
   if (!found) return res.status(404).json({ error: 'Code not found' });
   if (found.used) return res.status(400).json({ error: 'Code already used' });
 
-  try {
-    const payout = await sendRazorpayPayout(upi, found.amount, code);
+  found.used = true;
+  found.upi = upi;
+  found.redeemedAt = new Date();
+  await found.save();
 
-    if (payout && payout.status === 'processed') {
-      found.used = true;
-      found.upi = upi;
-      found.redeemedAt = new Date();
-      await found.save();
+  await sendAlerts(found.code, upi, found.amount);
 
-      // Telegram alert
-      await sendAlerts(code, upi, found.amount);
+  setTimeout(() => {
+    console.log(`✅ ₹${found.amount} sent to ${upi} for code ${code}`);
+  }, 5000);
 
-      return res.json({ message: `✅ ₹${found.amount} sent to ${upi} successfully.` });
-    } else {
-      return res.status(500).json({ error: 'Payout failed. Please try again later.' });
-    }
-  } catch (err) {
-    console.error('❌ Razorpay payout error:', err?.response?.data || err.message);
-    return res.status(500).json({ error: 'Payout request failed. Please check UPI ID or try again.' });
-  }
+  res.json({ message: `₹${found.amount} will be sent to ${upi} shortly.` });
 });
 
 // CashBot route
@@ -166,39 +158,3 @@ app.post('/cashbot', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
-
-const axios = require('axios');
-
-async function sendRazorpayPayout(upi, amount, code) {
-  const payoutResponse = await axios.post(
-    'https://api.razorpay.com/v1/payouts',
-    {
-      account_number: "2323230000000001",
-      fund_account: {
-        account_type: "vpa",
-        vpa: { address: upi },
-        contact: {
-          name: "Cash2UPI User",
-          type: "customer",
-          email: "test@cash2upi.com",
-          contact: "9999999999"
-        }
-      },
-      amount: amount * 100, // Razorpay needs paise
-      currency: "INR",
-      mode: "UPI",
-      purpose: "payout",
-      queue_if_low_balance: true,
-      reference_id: `redeem_${code}`
-    },
-    {
-      auth: {
-        username: 'rzp_test_2Sqbi6juDaLSoL',
-        password: 'rVdcvQfNzOvoOgE7AV1kIYEl'
-      },
-      headers: { 'Content-Type': 'application/json' }
-    }
-  );
-
-  return payoutResponse.data;
-}
