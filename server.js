@@ -180,11 +180,11 @@ async function sendRazorpayPayout(upi, amount, code) {
         contact: {
           name: "Cash2UPI User",
           type: "customer",
-          email: "user@example.com",
+          email: "test@cash2upi.com",
           contact: "9999999999"
         }
       },
-      amount: amount * 100, // Razorpay uses paise
+      amount: amount * 100, // Razorpay needs paise
       currency: "INR",
       mode: "UPI",
       purpose: "payout",
