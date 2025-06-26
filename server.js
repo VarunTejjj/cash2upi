@@ -158,3 +158,39 @@ app.post('/cashbot', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+
+const axios = require('axios');
+
+async function sendRazorpayPayout(upi, amount, code) {
+  const payoutResponse = await axios.post(
+    'https://api.razorpay.com/v1/payouts',
+    {
+      account_number: "2323230000000001",
+      fund_account: {
+        account_type: "vpa",
+        vpa: { address: upi },
+        contact: {
+          name: "Cash2UPI User",
+          type: "customer",
+          email: "user@example.com",
+          contact: "9999999999"
+        }
+      },
+      amount: amount * 100, // Razorpay uses paise
+      currency: "INR",
+      mode: "UPI",
+      purpose: "payout",
+      queue_if_low_balance: true,
+      reference_id: `redeem_${code}`
+    },
+    {
+      auth: {
+        username: 'rzp_test_2Sqbi6juDaLSoL',
+        password: 'rVdcvQfNzOvoOgE7AV1kIYEl'
+      },
+      headers: { 'Content-Type': 'application/json' }
+    }
+  );
+
+  return payoutResponse.data;
+}
